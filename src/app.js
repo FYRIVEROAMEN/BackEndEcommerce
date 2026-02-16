@@ -1,50 +1,29 @@
 import express from "express";
 
-import User from "./models/users.model.js";
+import user_Routes from "./routes/user.routes.js";
+
+// crear la aplicacion de express
 const app = express(); 
 
+// middlewares para parsear el cuerpo de las solicitudes y manejar datos en formato JSON, esto es necesario para poder recibir datos en el cuerpo de las peticiones POST y PUT, por ejemplo cuando queremos crear o actualizar un usuario
+app.use(express.json())
 
-//obtener todos los usuarios
-app.get("/user", async (peticion , respuesta) => {
-   try {
+// definir las rutas de la aplicacion, en este caso vamos a usar las rutas definidas en el archivo user.routes.js para manejar las operaciones relacionadas con los usuarios
+app.use(user_Routes)
 
-    const usuarios = await User.find()
-                                // .select({ password: 0, __v: 0 }) // otra forma de excluir campos, con un objeto
-                                .select("-password -__v") // no queremos mostrar e password en la respuesta
+
+
+
+
+// app.get("/users", async (req , res) => {
+
+// })
+
+
+// app.post("/users", async (req , res) => {
   
-                                 
 
-    respuesta.send(usuarios);  
-
-
-   } catch (error) {
-    respuesta.send("no se pudo obtener los usuarios")
-    console.log (error)
-   }
-})
-
-
-app.post("/user", async (peticion , respuesta) => {
-  
-    try {
-   const usuarioData = {
-    name: "juan",
-    email: "juan@example.com",
-    password: "123456",
-    role: "admin",
-    bornDate: new Date("1990-01-01"),
-   };
-
-   const usuario = new User(usuarioData);
-
-   await usuario.save()
-    respuesta.send ("Usuario creado exitosamente");
-
-   } catch (error) {
- respuesta.send("algo fallo")
- console.log (error)
-   }
-})
+// })
 
 
 

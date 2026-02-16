@@ -2,8 +2,8 @@
 import dotenv from "dotenv";
 // las variables de entorno se cargan en process.env
 dotenv.config();
-import app from "./app.js";
 import mongoose from "mongoose";
+import app from "./app.js";
 
 // import express from "express";
 // const app = express();
@@ -16,12 +16,12 @@ mongoose.connect(process.env.MONGO_URI)
                   console.log ("Conexión exitosa a MongoDB");
 
 // como configuramos funcionalidades de nuestro servidor 
-                  // app.get("/users", (peicion , respuesta) => {
+                  // app.get("/users", (peticion , respuesta) => {
 //es fundamental enviar una respuesta al 
 //                   respuesta.send ("lista de usuarios333");
     
 // })
-//                   app.post("/users", (peicion , respuesta) => {
+//                   app.post("/users", (peticion , respuesta) => {
 //                   respuesta.send ("crear un nuevo usuario");
 // })  //poniendolo a escuchar en la linea de abajo
                   app.listen(PORT, () => {
