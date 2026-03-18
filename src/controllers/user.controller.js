@@ -1,4 +1,12 @@
-import User from "../models/user.model.js";
+import User from "../models/users.model.js";
+
+import bcrypt from "bcryptjs";
+
+const saltRounds = 1
+; // esto es para definir el numero de rondas de sal que se van a usar para encriptar las contraseñas, un valor mas alto significa una encriptacion mas fuerte pero tambien un proceso de encriptacion mas lento, por lo general se recomienda usar un valor entre 10 y 12 para un buen equilibrio entre seguridad y rendimientono 
+
+
+
 // obtener usuarios 
 async function getUsers(req, res) {
     try {
@@ -40,10 +48,6 @@ async function getUserById(req, res) {
     res.status(500).send("no se pudo obtener el usuario por id");
 }
 }
-
-
-
-
 
 // crear un nuevo usuario.
 async function createUser (req, res) {
