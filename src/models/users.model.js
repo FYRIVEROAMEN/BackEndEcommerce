@@ -18,9 +18,9 @@ const userSchema = new Schema({
         unique: true,
         minlength: 5,
         maxlength: 70,
-        lowercase: true, // esto es para convertir el email a minusculas antes de guardarlo en la base de datos
+        lowercase: true,
         trim: true,
-        match: /^\S+@\S+\.\S+$/ // esto es para validar que el email tenga un formato correcto, con un @ 
+        match: /^\S+@\S+\.\S+$/ 
     },
     password: {
         type: String,
