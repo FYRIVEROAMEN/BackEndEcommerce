@@ -1,14 +1,46 @@
 import mongoose from "mongoose";   
-const schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
 
 // el esquema de usuario va a definir la estructura de los documentos que se van a guardar en la colección de usuarios
-const userSchema = new schema({
-    name: String,
-    email: String,
-    password: String,
-    role: String,
-    bornDate: Date,
+const userSchema = new Schema({
+
+    name: { type: String,
+            required: true,
+            minlength: 3,
+            maxlength: 50,
+            trim: true, // esto es para eliminar los espacios en blanco al inicio y al final del nombre, de esta forma nos aseguramos de que el nombre se guarda de forma limpia en la base de datos, sin espacios innecesarios que puedan causar problemas al buscar o mostrar los usuarios
+            match: /^[a-zA-Z\s]+$/
+         },
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        minlength: 5,
+        maxlength: 70,
+        lowercase: true, // esto es para convertir el email a minusculas antes de guardarlo en la base de datos
+        trim: true,
+        match: /^\S+@\S+\.\S+$/ // esto es para validar que el email tenga un formato correcto, con un @ 
+    },
+    password: {
+        type: String,
+        required: true,
+        minlength: 6,
+        maxlength: 100,
+        trim: true
+    },
+    role: {
+         type: String,
+         default: 'user', 
+         enum: ['user', 'admin'] // esto es para definir un conjunto de valores permitidos para el campo de role, de esta forma solo se pueden asignar los valores 'user' o 'admin' al campo de role, lo que ayuda a mantener la integridad de los datos y evitar errores al asignar roles a los usuarios
+        },
+
+    bornDate: {type: Date},
+
+    createdAt: {type: Date,
+         default: Date.now
+        }
+
 })
 
 
@@ -16,3 +48,6 @@ const userSchema = new schema({
 const User = mongoose.model('User', userSchema);
  
     export default User;
+
+
+    

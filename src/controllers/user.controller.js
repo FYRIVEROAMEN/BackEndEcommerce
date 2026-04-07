@@ -1,8 +1,9 @@
+import mongoose from "mongoose";
 import User from "../models/users.model.js";
 
-import bcrypt from "bcryptjs";
+//import bcrypt from "bcryptjs";
 
-const saltRounds = 1
+//const saltRounds = 1
 ; // esto es para definir el numero de rondas de sal que se van a usar para encriptar las contraseñas, un valor mas alto significa una encriptacion mas fuerte pero tambien un proceso de encriptacion mas lento, por lo general se recomienda usar un valor entre 10 y 12 para un buen equilibrio entre seguridad y rendimientono 
 
 
@@ -55,7 +56,7 @@ async function createUser (req, res) {
         // console.log( "body", req.body) // esto es para verificar que estamos recibiendo los datos en el cuerpo de la peticion, en la consola del servidor deberiamos ver el objeto con los datos del nuevo usuario que queremos crear
 
         const usuario = new User(req.body);
-        // el modelo de usuario es una clase que nos permite crear instancias de usuario con los datos que recibimos en el cuerpo de la peticion, al crear una nueva instancia de User con los datos de req.body, estamos creando un nuevo usuario que luego podemos guardar en la base de datos usando el metodo save()
+        // el modelo de usuario es una clase que nos permite crear ins etancias de usuario con los datos que recibimos en el cuerpo de la peticion, al crear una nueva instancia de User con los datos de req.body, estamos creando un nuevo usuario que luego podemos guardar en la base de datos usando el metodo save()
 
         console.log (usuario) // esto es para verificar que hemos creado correctamente la instancia de usuario con los datos recibidos, en la consola del servidor deberiamos ver un objeto de usuario con los campos definidos en el esquema de usuario y los valores que hemos enviado en la peticion
 
@@ -66,13 +67,30 @@ async function createUser (req, res) {
          res.send (newUser);
         //  res.send("creando un nuevo usuario") // esta respuesta se envia antes de guardar el usuario en la base de datos, lo que no es correcto, por eso es importante usar el await para esperar a que se guarde el usuario antes de enviar la respuesta al cliente, de esta forma nos aseguramos de que el usuario se ha guardado correctamente antes de responder al cliente con los datos del nuevo usuario creado
    } catch (error) {
- res.send("algo fallo")
  console.log (error)
+ if (error instanceof mongoose.Error.ValidationError) {
+    return res.status(400).send(error.message) }
+  res.status(500).send("algo fallo")
    }
-}
+} 
 
 async function updateUser(req, res) {
-    res.send("actualizando un usuario existente")
+  
+try { 
+        const { id } = req.params; 
+
+        const updateUser = await User.findByIdAndUpdate(id, req.body, { new : true, runValidators: true }).select("-password -__v"); // esto es para buscar el usuario por su id y actualizarlo con los datos que recibimos en el cuerpo de la peticion, el metodo findByIdAndUpdate es un metodo de mongoose que nos permite buscar un documento por su id y actualizarlo con nuevos datos, el tercer parametro { new: true } es para indicar que queremos que la respuesta incluya el usuario actualizado en lugar del usuario original antes de la actualizacion, y runValidators: true es para asegurarnos de que se apliquen las validaciones definidas en el esquema de usuario al actualizar el usuario, esto es importante para mantener la integridad de los datos y evitar que se guarden datos invalidos en la base de datos, y el select es para excluir el campo de password y __v de la respuesta, de esta forma si el usuario se actualiza correctamente, la respuesta solo incluirá los campos del usuario sin mostrar la contraseña ni el campo __v que es un campo interno de mongoose
+
+        if (!updateUser) {
+            return res.status(404).send("Usuario no encontrado");
+        }
+
+        res.status(200).send("usuario actualizado correctamente")
+
+    } catch (error) {
+        console.log (error)
+        res.status(500).send("no se pudo actualizar el usuario")
+    }
 }
 
 async function deleteUser (req,res) {
@@ -80,7 +98,7 @@ async function deleteUser (req,res) {
     try {
         const {id} = req.params;
 
-        const deletedUser = await User.findByIdAndDelete(id).select("-password -__v"); // esto es para buscar el usuario por su id y eliminarlo de la base de datos, el metodo findByIdAndDelete es un metodo de mongoose que nos permite buscar un documento por su id y eliminarlo, y el select es para excluir el campo de password y __v de la respuesta, de esta forma si el usuario se elimina correctamente, la respuesta solo incluirá los campos del usuario sin mostrar la contraseña ni el campo __v que es un campo interno de mongoose
+        const deletedUser = await User.findByIdAndDelete(id).select("-password -__v"); // esto es para buscar el usuario por su id y eliminarlo de la base de datos, el metodo findByIdAndDelete es un metodo de mongoose que nos permite buscar un documento por su id y eliminarlo, y el select es para excluir el campo de password y __v de la respuesta, de esta forma si el usuario se elimina correctamente, la respuesta solo incluirá los campos del usuario sin mostrar la contraseña ni el campo __v que es un campo interno de mongoose 
         if (!deletedUser) {
             return res.status(400).send("Usuario no encontrado o ya eliminado"); // esto es para manejar el caso en el que el usuario que queremos eliminar no existe en la base de datos, en este caso devolvemos un status 400 que indica que la solicitud no es válida, y un mensaje que indica que el usuario no fue encontrado o ya fue eliminado, esto es importante para informar al cliente sobre el resultado de su solicitud de eliminación, y evitar confusiones sobre si el usuario fue eliminado o si simplemente no existía en la base de datos
         }
