@@ -21,4 +21,5 @@ router.put("/users/:id", updateUser )
 // eliminar un usuario
 router.delete("/users/:id", deleteUser ) 
 
+
 export default router;

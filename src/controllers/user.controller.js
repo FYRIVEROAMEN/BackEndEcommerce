@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import User from "../models/users.model.js";
+import bcrypt from "bcrypt";
+
 
 //import bcrypt from "bcryptjs";
 
@@ -51,27 +53,35 @@ async function getUserById(req, res) {
 }
 
 // crear un nuevo usuario.
-async function createUser (req, res) {
-      try {
-        // console.log( "body", req.body) // esto es para verificar que estamos recibiendo los datos en el cuerpo de la peticion, en la consola del servidor deberiamos ver el objeto con los datos del nuevo usuario que queremos crear
+async function createUser(req, res) {
+  try {
+    const { name, email, password, birthdate, province } = req.body;
 
-        const usuario = new User(req.body);
-        // el modelo de usuario es una clase que nos permite crear ins etancias de usuario con los datos que recibimos en el cuerpo de la peticion, al crear una nueva instancia de User con los datos de req.body, estamos creando un nuevo usuario que luego podemos guardar en la base de datos usando el metodo save()
+    // 1. Encriptamos la contraseña (10 rondas de "sal")
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-        console.log (usuario) // esto es para verificar que hemos creado correctamente la instancia de usuario con los datos recibidos, en la consola del servidor deberiamos ver un objeto de usuario con los campos definidos en el esquema de usuario y los valores que hemos enviado en la peticion
+    // 2. Creamos el usuario con la contraseña ya encriptada
+    const usuario = new User({
+      name,
+      email,
+      password: hashedPassword,
+      birthdate,
+      province
+    });
 
-       const newUser = await usuario.save() // esto es para guardar el nuevo usuario en la base de datos, el metodo save() es asincrono y devuelve una promesa que se resuelve con el usuario guardado, que incluye un id generado por MongoDB y cualquier otro campo que se haya definido en el esquema de usuario
+    const newUser = await usuario.save();
 
-       newUser.password = undefined; // esto es para ocultar el campo de password en la respuesta, al establecerlo como undefined, el campo no se incluirá en el objeto que se envía al cliente, esto es una medida de seguridad para evitar exponer la contraseña del usuario en la respuesta
+    // Ocultamos la contraseña en la respuesta por seguridad
+    newUser.password = undefined;
+    res.status(201).send(newUser);
 
-         res.send (newUser);
-        //  res.send("creando un nuevo usuario") // esta respuesta se envia antes de guardar el usuario en la base de datos, lo que no es correcto, por eso es importante usar el await para esperar a que se guarde el usuario antes de enviar la respuesta al cliente, de esta forma nos aseguramos de que el usuario se ha guardado correctamente antes de responder al cliente con los datos del nuevo usuario creado
-   } catch (error) {
- console.log (error)
- if (error instanceof mongoose.Error.ValidationError) {
-    return res.status(400).send(error.message) }
-  res.status(500).send("algo fallo")
-   }
+  } catch (error) {
+    console.log(error);
+    if (error instanceof mongoose.Error.ValidationError) {
+      return res.status(400).send(error.message);
+    }
+    res.status(500).send("Algo falló al crear el usuario");
+  }
 } 
 
 async function updateUser(req, res) {
