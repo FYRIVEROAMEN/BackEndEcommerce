@@ -2,12 +2,13 @@ import User from "../models/users.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-// 1. REGISTRO
+
 export const register = async (req, res) => {
     try {
-        const { name, email, password, birthdate, province } = req.body;
+        // Capturamos todos los campos necesarios del body
+        const { name, email, password, birthdate, province, role } = req.body;
 
-        // Encriptamos la clave (10 saltos de mono)
+        
         const passwordHash = await bcrypt.hash(password, 10);
 
         const nuevoUsuario = new User({
@@ -15,7 +16,8 @@ export const register = async (req, res) => {
             email,
             password: passwordHash,
             birthdate,
-            province
+            province,
+            role: role || 'client' // Si no viene nada en el JSON, se guarda como 'client'
         });
 
         await nuevoUsuario.save();
@@ -25,32 +27,31 @@ export const register = async (req, res) => {
     }
 };
 
-// 2. LOGIN
+// 2. LOGIN: Devuelve el token y el rol para el Navbar
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Buscamos al mono en la base de datos
         const userFound = await User.findOne({ email });
         if (!userFound) return res.status(404).json({ message: "Email no encontrado" });
 
-        // Comparamos la clave con Bcrypt
         const isMatch = await bcrypt.compare(password, userFound.password);
         if (!isMatch) return res.status(401).json({ message: "Contraseña incorrecta" });
 
-        // Creamos la pulsera VIP (JWT)
+        // Generamos el Token con el ID y el Rol
         const token = jwt.sign(
             { id: userFound._id, role: userFound.role },
-            "CLAVE_SECRETA_DEL_KING", // Esto debería ir en tu .env
+            "CLAVE_SECRETA_DEL_KING", 
             { expiresIn: "1h" }
         );
 
+        // Enviamos la pulsera VIP al Frontend
         res.json({
             token,
             name: userFound.name,
             role: userFound.role
         });
     } catch (error) {
-        res.status(500).json({ error, message: "Error en el servidor" });
+        res.status(500).json({ message: "Error en el servidor", error: error.message });
     }
 };

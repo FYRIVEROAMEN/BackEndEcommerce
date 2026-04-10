@@ -8,6 +8,8 @@ import products_Routes from "./routes/product.routes.js";
 
 import authRoutes from "./auth/auth.routes.js";
 
+import order_Routes from "./routes/order.routes.js";
+
 // crear la aplicacion de expresss
 const app = express(); 
 
@@ -19,7 +21,7 @@ app.use(express.json())
 app.use("/api/auth", authRoutes);
 
 // definir las rutas de la aplicacion, en este caso vamos a usar las rutas definidas en el archivo user.routes.js para manejar las operaciones relacionadas con los usuarios
-app.use("/api", [ user_Routes , products_Routes] )
+app.use("/api", [ user_Routes , products_Routes, order_Routes] )
 
 
 
