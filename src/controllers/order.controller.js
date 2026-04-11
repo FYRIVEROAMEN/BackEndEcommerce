@@ -1,34 +1,41 @@
 import Order from "../models/order.model.js";
 
-// 1. Crear una nueva orden (POST)
 export const createOrder = async (req, res) => {
     try {
-        const { totalPrice, user, products } = req.body;
+        const { user, products, totalPrice, status } = req.body;
 
-        const nuevaOrden = new Order({
+        const newOrder = new Order({
+            user,
+            products,
             totalPrice,
-            user,     // ID del usuario que viene del Front
-            products, // Array de { product, quantity, price }
-            status: 'pending'
+            status: status || 'pending'
         });
 
-        await nuevaOrden.save();
-        res.status(201).json({ message: "Orden creada con éxito", nuevaOrden });
+        const savedOrder = await newOrder.save();
+        
+        res.status(201).json({
+            message: "Orden creada con éxito",
+            order: savedOrder
+        });
     } catch (error) {
-        res.status(400).json({ message: "Error al crear la orden", error: error.message });
+        res.status(400).json({ 
+            message: "No se pudo procesar la orden", 
+            error: error.message 
+        });
     }
 };
 
-
 export const getOrders = async (req, res) => {
     try {
-        // Usamos populate para que en lugar de solo el ID, nos traiga el nombre del usuario y el producto
-        const ordenes = await Order.find()
-            .populate("user", "name email") 
-            .populate("products.product", "name price");
+        const orders = await Order.find()
+            .populate('user', 'name email')
+            .populate('products.product', 'name price');
             
-        res.json(ordenes);
+        res.status(200).json(orders);
     } catch (error) {
-        res.status(500).json({ message: "Error al obtener las órdenes", error: error.message });
+        res.status(500).json({ 
+            message: "Error al obtener las órdenes", 
+            error: error.message 
+        });
     }
 };

@@ -1,25 +1,19 @@
 import express from "express";
 import { getProducts, getProductById, createProduct, updateProduct, deleteProduct } from "../controllers/product.controller.js";
-import router from "./user.routes.js";
+import { verifyToken, isAdmin } from "../middlewares/auth.middleware.js";
+import upload from "../config/multer.js"; // IMPORTANTE: Sin las llaves { }
 
+const router = express.Router(); 
 
-const Router = express.Router ();
+router.get("/products", getProducts);
+router.get("/products/:id", getProductById);
 
-//Ruta para obtener todos los productos
+// RUTAS PROTEGIDAS 
 
-router.get ("/products", getProducts )
+router.put("/products/:id", verifyToken, isAdmin, upload.single("image"), updateProduct);
 
+router.delete("/products/:id", verifyToken, isAdmin, deleteProduct);
 
-//ruta para obtener un producto por id
-router.get("/products/:id", getProductById )   
+router.post("/products", verifyToken, isAdmin, upload.single("image"), createProduct);
 
-//ruta para crear un nuevo producto
-Router.post("/products", createProduct )
-
-//ruta para actualizar un producto existente
-Router.put("/products/:id", updateProduct )
-
-//ruta para eliminar un producto
-Router.delete("/products/:id", deleteProduct )
-
-export default Router;
+export default router;

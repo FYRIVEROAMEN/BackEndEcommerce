@@ -3,12 +3,6 @@ import User from "../models/users.model.js";
 import bcrypt from "bcrypt";
 
 
-//import bcrypt from "bcryptjs";
-
-//const saltRounds = 1
-; // esto es para definir el numero de rondas de sal que se van a usar para encriptar las contraseñas, un valor mas alto significa una encriptacion mas fuerte pero tambien un proceso de encriptacion mas lento, por lo general se recomienda usar un valor entre 10 y 12 para un buen equilibrio entre seguridad y rendimientono 
-
-
 
 // obtener usuarios 
 async function getUsers(req, res) {
@@ -57,21 +51,23 @@ async function createUser(req, res) {
   try {
     const { name, email, password, birthdate, province } = req.body;
 
-    // 1. Encriptamos la contraseña (10 rondas de "sal")
+    
+    const imagePath = req.file 
+      ? `/uploads/users/${req.file.filename}` 
+      : "/uploads/users/default.png";
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 2. Creamos el usuario con la contraseña ya encriptada
     const usuario = new User({
       name,
       email,
       password: hashedPassword,
       birthdate,
-      province
+      province,
+      image: imagePath 
     });
 
     const newUser = await usuario.save();
-
-    // Ocultamos la contraseña en la respuesta por seguridad
     newUser.password = undefined;
     res.status(201).send(newUser);
 
@@ -85,19 +81,30 @@ async function createUser(req, res) {
 } 
 
 async function updateUser(req, res) {
-  
-try { 
-        const { id } = req.params; 
+  try {
+    const { id } = req.params;
+    
+    
+    let updateData = { ...req.body };
 
-        const updateUser = await User.findByIdAndUpdate(id, req.body, { new : true, runValidators: true }).select("-password -__v"); // esto es para buscar el usuario por su id y actualizarlo con los datos que recibimos en el cuerpo de la peticion, el metodo findByIdAndUpdate es un metodo de mongoose que nos permite buscar un documento por su id y actualizarlo con nuevos datos, el tercer parametro { new: true } es para indicar que queremos que la respuesta incluya el usuario actualizado en lugar del usuario original antes de la actualizacion, y runValidators: true es para asegurarnos de que se apliquen las validaciones definidas en el esquema de usuario al actualizar el usuario, esto es importante para mantener la integridad de los datos y evitar que se guarden datos invalidos en la base de datos, y el select es para excluir el campo de password y __v de la respuesta, de esta forma si el usuario se actualiza correctamente, la respuesta solo incluirá los campos del usuario sin mostrar la contraseña ni el campo __v que es un campo interno de mongoose
+    
+    if (req.file) {
+      updateData.image = `/uploads/users/${req.file.filename}`;
+    }
 
-        if (!updateUser) {
-            return res.status(404).send("Usuario no encontrado");
-        }
+    const userUpdated = await User.findByIdAndUpdate(
+        id, 
+        updateData, 
+        { new: true, runValidators: true }
+    ).select("-password -__v");
 
-        res.status(200).send("usuario actualizado correctamente")
+    if (!userUpdated) {
+      return res.status(404).send("Usuario no encontrado");
+    }
 
-    } catch (error) {
+    res.status(200).send("Usuario actualizado correctamente");
+
+  } catch (error) {
         console.log (error)
         res.status(500).send("no se pudo actualizar el usuario")
     }

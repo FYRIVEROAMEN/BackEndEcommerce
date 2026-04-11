@@ -1,30 +1,32 @@
-import cors from "cors";
-
 import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from 'url';
+
+// Configuramos las rutas de archivos para que static no falle
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 import user_Routes from "./routes/user.routes.js";
-
 import products_Routes from "./routes/product.routes.js";
-
 import authRoutes from "./auth/auth.routes.js";
-
 import order_Routes from "./routes/order.routes.js";
 
-// crear la aplicacion de expresss
+dotenv.config();
+
 const app = express(); 
 
-app.use(cors()) 
-// middlewares para parsear el cuerpo de las solicitudes y manejar datos en formato JSON, esto es necesario para poder recibir datos en el cuerpo de las peticiones POST y PUT, por ejemplo cuando queremos crear o actualizar un usuario
-app.use(express.json())
+// Middlewares 
+app.use(cors());
+app.use(express.json());
 
-//autentificaciones y autorizaciones
+
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+
+// Definición de rutas
 app.use("/api/auth", authRoutes);
+app.use("/api", [user_Routes, products_Routes, order_Routes]);
 
-// definir las rutas de la aplicacion, en este caso vamos a usar las rutas definidas en el archivo user.routes.js para manejar las operaciones relacionadas con los usuarios
-app.use("/api", [ user_Routes , products_Routes, order_Routes] )
-
-
-
-
-
-export default app; 
+export default app;

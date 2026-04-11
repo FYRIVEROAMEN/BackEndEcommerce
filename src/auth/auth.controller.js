@@ -2,56 +2,67 @@ import User from "../models/users.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-
 export const register = async (req, res) => {
     try {
-        // Capturamos todos los campos necesarios del body
-        const { name, email, password, birthdate, province, role } = req.body;
+        const { name, email, password, birthdate, province } = req.body;
 
-        
-        const passwordHash = await bcrypt.hash(password, 10);
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({ message: "el usuario ya existe" });
+        }
 
-        const nuevoUsuario = new User({
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const imagePath = req.file ? `/uploads/users/${req.file.filename}` : "/uploads/users/default.png";
+
+        const newUser = new User({
             name,
             email,
-            password: passwordHash,
+            password: hashedPassword,
             birthdate,
             province,
-            role: role || 'client' // Si no viene nada en el JSON, se guarda como 'client'
+            image: imagePath
         });
 
-        await nuevoUsuario.save();
-        res.status(201).json({ message: "¡Usuario creado con éxito, mi rey!" });
+        await newUser.save();
+
+        res.status(201).json({ message: "usuario creado con éxito" });
     } catch (error) {
-        res.status(400).json({ message: "Error al registrar", error: error.message });
+        res.status(500).json({ message: "error al registrar usuario", error: error.message });
     }
 };
 
-// 2. LOGIN: Devuelve el token y el rol para el Navbar
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const userFound = await User.findOne({ email });
-        if (!userFound) return res.status(404).json({ message: "Email no encontrado" });
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: "usuario no encontrado" });
+        }
 
-        const isMatch = await bcrypt.compare(password, userFound.password);
-        if (!isMatch) return res.status(401).json({ message: "Contraseña incorrecta" });
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+            return res.status(400).json({ message: "contraseña incorrecta" });
+        }
 
-        // Generamos el Token con el ID y el Rol
         const token = jwt.sign(
-            { id: userFound._id, role: userFound.role },
-            "CLAVE_SECRETA_DEL_KING", 
-            { expiresIn: "1h" }
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: "24h" }
         );
 
-        // Enviamos la pulsera VIP al Frontend
-        res.json({
+        res.status(200).json({
             token,
-            name: userFound.name,
-            role: userFound.role
+            user: {
+                id: user._id,
+                name: user.name,
+                role: user.role,
+                image: user.image
+            }
         });
     } catch (error) {
-        res.status(500).json({ message: "Error en el servidor", error: error.message });
+        res.status(500).json({ message: "error al iniciar sesión",error });
     }
 };
